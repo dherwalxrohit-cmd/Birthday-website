@@ -1,0 +1,317 @@
+import React, { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+// CuteRomanticWebsite.jsx
+// Single-file React component (Tailwind CSS assumed in the project)
+// Dependencies: framer-motion
+
+export default function CuteRomanticWebsite() {
+  const [musicOn, setMusicOn] = useState(false);
+  const [showNote, setShowNote] = useState(false);
+  const [showSecret, setShowSecret] = useState(false);
+  const [hearts, setHearts] = useState([]);
+  const [clickCount, setClickCount] = useState(0);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const audioRef = useRef(null);
+  const confettiRef = useRef(null);
+
+  // Create floating hearts as surprises
+  useEffect(() => {
+    const id = setInterval(() => {
+      setHearts((h) => {
+        if (h.length > 12) return h.slice(1);
+        return [
+          ...h,
+          {
+            id: Math.random().toString(36).slice(2, 9),
+            left: Math.random() * 100,
+            size: 12 + Math.random() * 36,
+            delay: Math.random() * 3,
+          },
+        ];
+      });
+    }, 900);
+
+    return () => clearInterval(id);
+  }, []);
+
+  // Toggle music
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (musicOn) audioRef.current.play();
+    else audioRef.current.pause();
+  }, [musicOn]);
+
+  // Simple confetti generator
+  useEffect(() => {
+    if (!showConfetti) return;
+    const canvas = confettiRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const W = (canvas.width = window.innerWidth);
+    const H = (canvas.height = window.innerHeight);
+    const particles = [];
+    const colors = ["#FF7BAC", "#FFD1DC", "#FFC4C4", "#FFF1F2", "#FDE68A"];
+
+    for (let i = 0; i < 120; i++) {
+      particles.push({
+        x: Math.random() * W,
+        y: Math.random() * H - H,
+        r: 2 + Math.random() * 6,
+        d: Math.random() * 40 + 10,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        tilt: Math.random() * 10 - 10,
+      });
+    }
+
+    let angle = 0;
+    const draw = () => {
+      ctx.clearRect(0, 0, W, H);
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        ctx.beginPath();
+        ctx.fillStyle = p.color;
+        ctx.fillRect(p.x, p.y, p.r * 2, p.r);
+        ctx.closePath();
+        p.y += Math.cos(angle + p.d) + 2 + p.r / 2;
+        p.x += Math.sin(angle) * 2;
+        p.tilt += 0.1;
+        p.x += Math.sin(p.tilt / 10);
+        if (p.y > H) {
+          p.y = -10;
+          p.x = Math.random() * W;
+        }
+      }
+      angle += 0.01;
+      requestAnimationFrame(draw);
+    };
+    draw();
+
+    const timer = setTimeout(() => setShowConfetti(false), 6000);
+    return () => clearTimeout(timer);
+  }, [showConfetti]);
+
+  // Heart click secret: click heart area several times to unlock secret
+  function handleHeartClick() {
+    setClickCount((c) => {
+      const next = c + 1;
+      if (next === 7) {
+        setShowSecret(true);
+        setShowConfetti(true);
+      }
+      return next;
+    });
+  }
+
+  // Small helper for random rotation
+  const randRot = () => `${-12 + Math.random() * 24}deg`;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 via-rose-50 to-white flex flex-col items-center text-rose-800">
+      {/* Canvas for confetti overlay */}
+      <canvas ref={confettiRef} className="pointer-events-none fixed top-0 left-0 w-full h-full z-50" />
+
+      <header className="w-full max-w-4xl p-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div
+            onClick={handleHeartClick}
+            className="w-14 h-14 rounded-full bg-rose-200/60 backdrop-blur-sm flex items-center justify-center cursor-pointer shadow-lg hover:scale-105 transition-transform"
+            aria-hidden
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-8 h-8 fill-current text-rose-600">
+              <path d="M12 21s-7-4.35-9-7.35C-0.5 9.5 6.5 4 12 8c5.5-4 12.5 1.5 9 5.65C19 16.65 12 21 12 21z" />
+            </svg>
+          </div>
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight">For My Love 💕</h1>
+            <p className="text-sm text-rose-500">A little website full of tiny surprises</p>
+          </div>
+        </div>
+
+        <div className="flex gap-3 items-center">
+          <button
+            onClick={() => setMusicOn((m) => !m)}
+            className="px-4 py-2 rounded-xl bg-rose-100/60 hover:bg-rose-200 transition-shadow shadow-sm text-sm"
+          >
+            {musicOn ? "Pause music" : "Play music"}
+          </button>
+
+          <button
+            onClick={() => setShowNote(true)}
+            className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-300 to-rose-200 text-rose-800 font-semibold shadow-lg"
+          >
+            Open love note
+          </button>
+        </div>
+      </header>
+
+      <main className="flex-1 w-full max-w-4xl p-6 flex flex-col md:flex-row gap-6">
+        {/* Left column: hero + poem */}
+        <section className="md:w-1/2 bg-white/60 rounded-3xl p-6 shadow-xl backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="flex flex-col items-start gap-4"
+          >
+            <div className="w-full flex items-center justify-between">
+              <h2 className="text-xl font-bold">You + Me</h2>
+              <span className="text-sm text-rose-500">Tiny moments, big love</span>
+            </div>
+
+            <div className="relative w-full h-56 rounded-2xl overflow-hidden">
+              {/* Sweet animated scene - hearts and glowing moon */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <svg viewBox="0 0 200 200" className="w-64 h-64 opacity-90">
+                  <defs>
+                    <linearGradient id="g1" x1="0" x2="1">
+                      <stop offset="0%" stopColor="#FDE68A" />
+                      <stop offset="100%" stopColor="#FECACA" />
+                    </linearGradient>
+                  </defs>
+                  <g transform="translate(100,100)">
+                    <motion.ellipse
+                      cx="0"
+                      cy="-10"
+                      rx="60"
+                      ry="20"
+                      fill="url(#g1)"
+                      animate={{ opacity: [0.6, 1, 0.6] }}
+                      transition={{ duration: 3, yoyo: Infinity }}
+                    />
+                    <motion.g animate={{ rotate: [0, 6, 0] }} transition={{ duration: 6, repeat: Infinity }}>
+                      <path d="M0 -10 C 20 -30, 50 -30, 60 -10 C 70 10, 40 40, 0 70 C -40 40, -70 10, -60 -10 C -50 -30, -20 -30, 0 -10 Z" fill="#FFB6C1" opacity="0.9" />
+                    </motion.g>
+                  </g>
+                </svg>
+              </div>
+
+              {/* Floating hearts */}
+              {hearts.map((h) => (
+                <motion.div
+                  key={h.id}
+                  initial={{ opacity: 0, y: 60, scale: 0.6 }}
+                  animate={{ opacity: 1, y: -220 }}
+                  transition={{ delay: h.delay, duration: 6 }}
+                  className="absolute"
+                  style={{ left: `${h.left}%`, bottom: -10 }}
+                >
+                  <Heart size={h.size} rotate={randRot()} />
+                </motion.div>
+              ))}
+            </div>
+
+            <div className="mt-4 text-sm text-rose-700">
+              <p>
+                I tucked a small surprise in this site. Click the little heart in the top-left a few times — you might discover something special. ✨
+              </p>
+            </div>
+
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={() => setShowConfetti(true)}
+                className="px-4 py-2 rounded-full bg-rose-100/70 hover:scale-105 transition-transform shadow-sm"
+              >
+                Throw confetti 🎉
+              </button>
+
+              <button
+                onClick={() => {
+                  setShowSecret(true);
+                  setShowConfetti(true);
+                }}
+                className="px-4 py-2 rounded-full bg-gradient-to-r from-pink-300 to-rose-200 font-semibold shadow-lg"
+              >
+                Reveal a secret ❤️
+              </button>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Right column: poem carousel + roses */}
+        <aside className="md:w-1/2 bg-white/60 rounded-3xl p-6 shadow-xl backdrop-blur-sm flex flex-col gap-4">
+          <h3 className="font-bold">A tiny poem</h3>
+
+          <PoemCarousel />
+
+          <div className="mt-2 p-4 rounded-2xl bg-rose-50/60 shadow-inner">
+            <p className="text-sm text-rose-700">Click the rose to see a short animation.</p>
+            <motion.div whileTap={{ scale: 0.92 }} className="mt-3">
+              <AnimatedRose />
+            </motion.div>
+          </div>
+        </aside>
+      </main>
+
+      <footer className="w-full p-6 flex items-center justify-center text-xs text-rose-400">
+        Built with a heart — open the love note and enjoy the little surprises. 💌
+      </footer>
+
+      {/* Love note modal */}
+      <AnimatePresence>
+        {showNote && (
+          <motion.div
+            className="fixed inset-0 z-40 flex items-center justify-center bg-black/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl"
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <h4 className="text-xl font-extrabold text-rose-700">My Little Love Note</h4>
+              <p className="mt-3 text-rose-600">Hey love — I made this tiny place on the web just to smile at you. Open your heart, press the little heart top-left a few times, and enjoy. 💖</p>
+
+              <div className="mt-4 flex gap-3 justify-end">
+                <button onClick={() => setShowNote(false)} className="px-4 py-2 rounded-xl bg-rose-100">Close</button>
+                <button
+                  onClick={() => {
+                    setShowNote(false);
+                    setShowConfetti(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-300 to-rose-200 font-semibold"
+                >
+                  Celebrate
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Secret modal (unlocked after several taps) */}
+      <AnimatePresence>
+        {showSecret && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <div className="absolute inset-0 bg-gradient-to-br from-pink-500/20 to-rose-200/10 backdrop-blur-sm" />
+            <motion.div className="relative bg-white rounded-3xl p-8 max-w-xl w-full shadow-2xl z-60" initial={{ scale: 0.8, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.8, y: 20 }}>
+              <h2 className="text-2xl font-extrabold text-rose-700">Surprise ❤️</h2>
+              <p className="mt-3 text-rose-600">You found the secret! Here's a short love note just for you:</p>
+
+              <div className="mt-4 bg-rose-50 p-4 rounded-xl">
+                <blockquote className="italic text-rose-800">"Every small thing you do colors my day — thank you for being my favorite surprise."</blockquote>
+              </div>
+
+              <div className="mt-4 flex gap-3 justify-end">
+                <button onClick={() => setShowSecret(false)} className="px-4 py-2 rounded-xl bg-rose-100">Close</button>
+                <button
+                  onClick={() => {
+                    setShowSecret(false);
+                    setShowConfetti(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-pink-300 to-rose-200 font-semibold"
+                >
+                  Yay!
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Hidden audio (free to replace with your favourite mp3 hosted in public/) */}
+      <audio ref={audioRef} loop
